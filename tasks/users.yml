@@ -1,5 +1,5 @@
 ---
-- name: Ensure MySQL users are present.
+- name: Ensure MySQL users are present (native_password_plugin).
   mysql_user:
     name: "{{ item.name }}"
     host: "{{ item.host | default('localhost') }}"
@@ -12,3 +12,41 @@
     update_password: "{{ item.update_password | default('always') }}"
   with_items: "{{ mysql_users }}"
   no_log: "{{ mysql_hide_passwords }}"
+  when:
+  - mysql_users_plugin is not defined or mysql_users_plugin == 'mysql_native_password'
+
+- name: Ensure MySQL users are present (caching_sha2_password, auth).
+  mysql_user:
+    name: "{{ item.name }}"
+    host: "{{ item.host | default('localhost') }}"
+    plugin: "{{ item.plugin | default(mysql_users_plugin) }}"
+    plugin_auth_string: "{{ item.plugin_auth_string }}"
+    salt: "{{ item.salt | default('') }}"
+    priv: "{{ item.priv | default('*.*:USAGE') }}"
+    state: "{{ item.state | default('present') }}"
+    append_privs: "{{ item.append_privs | default(false) }}"
+    column_case_sensitive: "{{ item.case_sensitive | default(false) }}"
+    update_password: "{{ item.update_password | default('always') }}"
+  with_items: "{{ mysql_users }}"
+  no_log: "{{ mysql_hide_passwords }}"
+  when:
+  - mysql_users_plugin is defined and mysql_users_plugin == 'caching_sha2_password'
+  - mysql_users_plugin_string is not defined or mysql_users_plugin_string == 'auth'
+
+- name: Ensure MySQL users are present (caching_sha2_password, hash).
+  mysql_user:
+    name: "{{ item.name }}"
+    host: "{{ item.host | default('localhost') }}"
+    plugin: "{{ item.plugin | default(mysql_users_plugin) }}"
+    plugin_hash_string: "{{ item.plugin_hash_string }}"
+    salt: "{{ item.salt | default('') }}"
+    priv: "{{ item.priv | default('*.*:USAGE') }}"
+    state: "{{ item.state | default('present') }}"
+    append_privs: "{{ item.append_privs | default(false) }}"
+    column_case_sensitive: "{{ item.case_sensitive | default(false) }}"
+    update_password: "{{ item.update_password | default('always') }}"
+  with_items: "{{ mysql_users }}"
+  no_log: "{{ mysql_hide_passwords }}"
+  when:
+  - mysql_users_plugin is defined and mysql_users_plugin == 'caching_sha2_password'
+  - mysql_users_plugin_string == 'hash'
